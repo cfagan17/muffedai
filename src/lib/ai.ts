@@ -40,11 +40,18 @@ type PlayerInput = {
   // Real game data (from ESPN)
   gameScore?: string | null;
   gameHeadline?: string | null;
-  // SportsDataIO enrichment
+  // SportsDataIO enrichment — player data
   injuryStatus?: string | null; // e.g., "Questionable (Knee) — Limited Practice"
   snapCount?: string | null; // e.g., "58 snaps (89%)"
+  depthPosition?: string | null; // e.g., "Starter WR", "Backup RB"
   projectedPointsNextWeek?: number | null;
   projectedStatsNextWeek?: string | null; // e.g., "Proj: 275 pass yds, 2 TD"
+  // SportsDataIO enrichment — team & betting context
+  teamRecord?: string | null; // e.g., "10-4 (W3) — Clinched Division"
+  oppRecord?: string | null; // e.g., "7-7"
+  bettingDetails?: string | null; // e.g., "Spread: -3.5 | O/U: 47.5 | Implied team total: 25.5 | ML: -180"
+  playerProps?: string | null; // e.g., "Passing Yards O/U 275.5, Touchdowns O/U 1.5"
+  dfsSalary?: string | null; // e.g., "DK $8200 / FD $9000"
   // Web research context (from Claude web search)
   research?: PlayerResearch;
 };
@@ -62,6 +69,7 @@ type ReportInput = {
   hasRealGameData: boolean;
   hasWebResearch: boolean;
   hasSportsDataIO: boolean;
+  hasBettingData: boolean;
 };
 
 type PlayerNarrative = {
@@ -100,12 +108,36 @@ function buildPlayerSummary(p: PlayerInput, scoringFormat: string): string {
     lines.push(`  Game headline: ${p.gameHeadline}`);
   }
 
-  // SportsDataIO data
+  // SportsDataIO player data
+  if (p.depthPosition) {
+    lines.push(`  Depth chart: ${p.depthPosition}`);
+  }
   if (p.snapCount) {
     lines.push(`  Snap count: ${p.snapCount}`);
   }
   if (p.injuryStatus) {
     lines.push(`  Injury: ${p.injuryStatus}`);
+  }
+
+  // Team context
+  if (p.teamRecord) {
+    lines.push(`  Team record: ${p.teamRecord}`);
+  }
+  if (p.oppRecord) {
+    lines.push(`  Opponent record: ${p.oppRecord}`);
+  }
+
+  // Betting data
+  if (p.bettingDetails) {
+    lines.push(`  Betting lines: ${p.bettingDetails}`);
+  }
+  if (p.playerProps) {
+    lines.push(`  Player props: ${p.playerProps}`);
+  }
+
+  // DFS salary
+  if (p.dfsSalary) {
+    lines.push(`  DFS salary: ${p.dfsSalary}`);
   }
 
   // Next week outlook
@@ -162,7 +194,11 @@ function buildPrompt(input: ReportInput): string {
     dataSources.push("real game scores and matchups from ESPN");
   if (input.hasSportsDataIO)
     dataSources.push(
-      "SportsDataIO (injuries, snap counts, season averages, projections)"
+      "SportsDataIO (injuries, snap counts, depth charts, season averages, projections, team standings)"
+    );
+  if (input.hasBettingData)
+    dataSources.push(
+      "betting data (game spreads, over/unders, moneylines, implied team totals, player prop bets, DFS salaries)"
     );
   if (input.hasWebResearch)
     dataSources.push(
@@ -198,8 +234,13 @@ KEY GUIDELINES:
 - Be opinionated. Take positions on whether a performance is sustainable or a fluke.
 - Use advanced football language naturally: snap share, target share, air yards, red zone share, route participation, defensive front, coverage shell.
 - When snap counts are provided, USE THEM to discuss workload and usage trends. "He played 58 of 65 snaps (89%)" adds real insight.
+- When depth chart status is provided, USE IT to discuss role security and opportunity. A starter with high snap counts tells a different story than a backup who got garbage-time work.
 - When injury data is provided, ALWAYS address it in the outlook section. Injury context is critical for fantasy decisions.
 - When next-week projections are provided, reference them in the outlook — compare projected points to season average to frame expectations.
+- When team records and standings are provided, USE THEM to frame game script narratives. A 10-2 team playing a 3-9 team creates a clear game script expectation. Teams on winning/losing streaks play differently. Playoff implications affect coaching decisions (resting starters, conservative play-calling).
+- When betting lines are provided (spreads, O/U, implied totals, moneylines), USE THEM to add sharp analysis. Compare actual game results to the betting line: "The Bills were 7-point favorites and won by 3 — a closer game than Vegas expected, which inflated garbage-time targets." Implied team totals help frame expected scoring environments.
+- When player props are provided, USE THEM for context. Compare actual performance to the prop line: "Mahomes' 312 passing yards sailed over his 275.5 prop" or "The rushing yards fell short of his 85.5 prop, which should concern PPR managers." Props reveal market expectations vs. reality.
+- When DFS salaries are provided, mention them to add a "value" angle. "At $7,200 on DraftKings, he's a screaming value if this target share holds" adds cross-format relevance.
 - Reference specific drives or quarters when the research supports it.
 - The tone is confident and conversational — you're a trusted fantasy advisor talking to a friend who takes their league seriously.
 
@@ -251,7 +292,7 @@ export async function generateAINarratives(
   try {
     const response = await ai.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 6000,
+      max_tokens: 8000,
       messages: [{ role: "user", content: prompt }],
     });
 
