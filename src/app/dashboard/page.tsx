@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signout } from "../login/actions";
+import PlayerSearch from "./player-search";
+import Roster from "./roster";
+import ScoringFormat from "./scoring-format";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -12,6 +15,30 @@ export default async function DashboardPage() {
   if (!user) {
     redirect("/login");
   }
+
+  // Fetch profile (scoring format)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("scoring_format")
+    .eq("id", user.id)
+    .single();
+
+  // Fetch user's roster with player details
+  const { data: roster } = await supabase
+    .from("user_players")
+    .select("id, position_tag, nfl_players(name, team, position)")
+    .eq("user_id", user.id)
+    .order("created_at");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rosterPlayers = ((roster ?? []) as any[]).map((r) => ({
+    id: r.id as number,
+    position_tag: r.position_tag as string,
+    nfl_players: r.nfl_players as { name: string; team: string; position: string },
+  }));
+
+  const usedPositionTags = rosterPlayers.map((p) => p.position_tag);
+  const scoringFormat = profile?.scoring_format ?? "PPR";
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -38,8 +65,7 @@ export default async function DashboardPage() {
       <main className="mx-auto max-w-5xl px-6 py-12">
         <h1 className="text-3xl font-bold text-slate-900">Your Dashboard</h1>
         <p className="mt-2 text-slate-600">
-          Welcome to Fantasy Playbook. Manage your roster and view your weekly
-          reports.
+          Manage your roster and view your weekly reports.
         </p>
 
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -49,16 +75,18 @@ export default async function DashboardPage() {
               My Players
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Add the key players from your fantasy roster to get personalized
-              reports.
+              Add 5-8 key players from your fantasy roster.{" "}
+              <span className="font-medium">
+                {rosterPlayers.length}/7 slots filled.
+              </span>
             </p>
-            <div className="mt-6 rounded-lg border-2 border-dashed border-slate-200 p-8 text-center">
-              <p className="text-sm text-slate-400">
-                Player management coming soon.
-              </p>
-              <p className="mt-1 text-xs text-slate-400">
-                You&apos;ll be able to search and add players here.
-              </p>
+
+            <div className="mt-4">
+              <PlayerSearch usedPositionTags={usedPositionTags} />
+            </div>
+
+            <div className="mt-6">
+              <Roster players={rosterPlayers} />
             </div>
           </div>
 
@@ -88,26 +116,15 @@ export default async function DashboardPage() {
                 </div>
               </Link>
             </div>
-          </div>
-        </div>
 
-        {/* Settings */}
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Settings</h2>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-slate-700">
-              Scoring Format
-            </label>
-            <div className="mt-2 flex gap-3">
-              {["PPR", "Half-PPR", "Standard"].map((format) => (
-                <button
-                  key={format}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 data-[active=true]:border-emerald-500 data-[active=true]:bg-emerald-50 data-[active=true]:text-emerald-700"
-                  data-active={format === "PPR"}
-                >
-                  {format}
-                </button>
-              ))}
+            {/* Settings */}
+            <div className="mt-8 border-t border-slate-200 pt-6">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Scoring Format
+              </h3>
+              <div className="mt-3">
+                <ScoringFormat currentFormat={scoringFormat} />
+              </div>
             </div>
           </div>
         </div>
