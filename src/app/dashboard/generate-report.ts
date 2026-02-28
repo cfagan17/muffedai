@@ -30,6 +30,7 @@ import {
   getPlayerProps,
   getDfsSalaries,
 } from "@/lib/sportsdata";
+import { getAdvancedStats, formatAdvancedStats } from "@/lib/nflverse";
 
 // --- NFL team lookup ---
 
@@ -232,6 +233,7 @@ export async function generateReport() {
     sdDepthCharts,
     sdPlayerProps,
     sdDfsSalaries,
+    advancedStats,
   ] = await Promise.all([
     // Sleeper
     getWeeklyStats(
@@ -257,12 +259,15 @@ export async function generateReport() {
     sdEnabled ? getDepthCharts() : Promise.resolve(null),
     sdEnabled ? getPlayerProps(season, weekNumber) : Promise.resolve(null),
     sdEnabled ? getDfsSalaries(season, weekNumber) : Promise.resolve(null),
+    // nflverse — Advanced analytics (EPA, air yards, YAC, target share)
+    getAdvancedStats(season, weekNumber),
   ]);
 
   const hasSleeperStats = realStats !== null && realStats.size > 0;
   const hasESPNData = espnScoreboard !== null && espnScoreboard.size > 0;
   const hasSportsData = sdGameStats !== null || sdInjuries !== null;
   const hasBettingData = sdOdds !== null || sdPlayerProps !== null;
+  const hasAdvancedStats = advancedStats !== null && advancedStats.size > 0;
 
   // We need at least one structured data source to generate a meaningful report
   if (!hasSleeperStats && !hasESPNData && !hasSportsData) {
@@ -446,6 +451,10 @@ export async function generateReport() {
       if (parts.length > 0) bettingDetails = parts.join(" | ");
     }
 
+    // nflverse advanced stats (EPA, air yards, YAC, target share)
+    const advanced = advancedStats?.get(name) ?? null;
+    const advancedStatsStr = advanced ? formatAdvancedStats(advanced) : null;
+
     // Next-week projection
     let projectedPointsNextWeek: number | null = null;
     let projectedStatsNextWeek: string | null = null;
@@ -505,6 +514,8 @@ export async function generateReport() {
       bettingDetails,
       playerPropsStr,
       dfsSalaryStr,
+      // nflverse advanced analytics
+      advancedStatsStr,
     };
   });
 
@@ -550,6 +561,7 @@ export async function generateReport() {
       hasWebResearch: hasResearch,
       hasSportsDataIO: hasSportsData,
       hasBettingData,
+      hasAdvancedStats,
       leagueNews: research?.leagueNews,
       players: playerData.map((p) => {
         const gameScore = p.game
@@ -589,6 +601,8 @@ export async function generateReport() {
           bettingDetails: p.bettingDetails,
           playerProps: p.playerPropsStr,
           dfsSalary: p.dfsSalaryStr,
+          // nflverse advanced analytics
+          advancedStats: p.advancedStatsStr,
           // Web research
           research: research?.players?.[p.name],
         };
