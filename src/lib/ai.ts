@@ -210,7 +210,7 @@ function buildPrompt(input: ReportInput): string {
     );
   if (input.hasAdvancedStats)
     dataSources.push(
-      "nflverse advanced analytics (EPA, air yards, yards after catch, target share, WOPR, RACR/PACR)"
+      "nflverse advanced analytics (EPA, CPOE, air yards, yards after catch, target share, WOPR, RACR/PACR)"
     );
   if (input.hasWebResearch)
     dataSources.push(
@@ -253,7 +253,7 @@ KEY GUIDELINES:
 - When betting lines are provided (spreads, O/U, implied totals, moneylines), USE THEM to add sharp analysis. Compare actual game results to the betting line: "The Bills were 7-point favorites and won by 3 — a closer game than Vegas expected, which inflated garbage-time targets." Implied team totals help frame expected scoring environments.
 - When player props are provided, USE THEM for context. Compare actual performance to the prop line: "Mahomes' 312 passing yards sailed over his 275.5 prop" or "The rushing yards fell short of his 85.5 prop, which should concern PPR managers." Props reveal market expectations vs. reality.
 - When DFS salaries are provided, mention them to add a "value" angle. "At $7,200 on DraftKings, he's a screaming value if this target share holds" adds cross-format relevance.
-- When advanced analytics are provided (EPA, air yards, YAC, target share, WOPR), USE THEM to separate surface-level stats from underlying quality. EPA is the gold standard — a QB with positive passing EPA is genuinely helping his team score, while negative EPA means the offense moved backwards on his plays even if the box score looks fine. Use EPA to identify players who were better or worse than their stat line suggests.
+- When advanced analytics are provided (EPA, CPOE, air yards, YAC, target share, WOPR), USE THEM to separate surface-level stats from underlying quality. EPA is the gold standard — a QB with positive passing EPA is genuinely helping his team score, while negative EPA means the offense moved backwards on his plays even if the box score looks fine. CPOE (Completion Percentage Over Expected) shows whether a QB is completing passes harder or easier than expected — positive CPOE means he's making throws other QBs would miss. Use EPA and CPOE together to identify players who were better or worse than their stat line suggests.
 - Target share and WOPR reveal opportunity quality: "His 28% target share and 0.52 WOPR show he's the clear alpha in this offense." Air yards share distinguishes deep threats from underneath receivers. RACR (receiving yards / air yards) above 1.0 means the player is generating YAC, below 1.0 means he's dropping deep balls or the QB is missing him.
 - Reference specific drives or quarters when the research supports it.
 - The tone is confident and conversational — you're a trusted fantasy advisor talking to a friend who takes their league seriously.

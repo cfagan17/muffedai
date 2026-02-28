@@ -5,7 +5,7 @@
  * GitHub releases. These include EPA, air yards, YAC, target share,
  * WOPR, and other advanced metrics derived from play-by-play data.
  *
- * Data source: https://github.com/nflverse/nflverse-data/releases/tag/player_stats
+ * Data source: https://github.com/nflverse/nflverse-data/releases/tag/stats_player
  * Updated nightly during the NFL season.
  *
  * No API key required — fully open-source data.
@@ -22,6 +22,8 @@ export type AdvancedPlayerStats = {
   passingEPA: number | null;
   rushingEPA: number | null;
   receivingEPA: number | null;
+  // CPOE (Completion Percentage Over Expected) — QBs only
+  cpoe: number | null;
   // Air yards
   passingAirYards: number | null;
   receivingAirYards: number | null;
@@ -40,7 +42,10 @@ export type AdvancedPlayerStats = {
 // --- CSV parsing ---
 
 const FETCH_TIMEOUT = 20_000;
-const DATA_URL_BASE =
+// Current nflverse URL pattern (stats_player); legacy (player_stats) as fallback
+const DATA_URL_PRIMARY =
+  "https://github.com/nflverse/nflverse-data/releases/download/stats_player";
+const DATA_URL_LEGACY =
   "https://github.com/nflverse/nflverse-data/releases/download/player_stats";
 
 function parseCSVRow(header: string[], row: string): Record<string, string> {
@@ -84,38 +89,48 @@ export async function getAdvancedStats(
   season: number,
   week: number
 ): Promise<Map<string, AdvancedPlayerStats> | null> {
-  const url = `${DATA_URL_BASE}/player_stats_${season}.csv`;
+  // Try new URL pattern first, fall back to legacy
+  const urls = [
+    `${DATA_URL_PRIMARY}/stats_player_week_${season}.csv`,
+    `${DATA_URL_LEGACY}/player_stats_${season}.csv`,
+  ];
+
+  let text: string | null = null;
+
+  for (const url of urls) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: { Accept: "text/csv" },
+        redirect: "follow",
+      });
+      clearTimeout(timeout);
+
+      if (response.ok) {
+        text = await response.text();
+        break;
+      }
+    } catch {
+      // Try next URL
+    }
+  }
+
+  if (!text) {
+    console.error("nflverse: all URLs failed");
+    return null;
+  }
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: { Accept: "text/csv" },
-      redirect: "follow",
-    });
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      console.error(`nflverse fetch failed: ${response.status} for ${url}`);
-      return null;
-    }
-
-    const text = await response.text();
     const lines = text.split("\n").filter((l) => l.trim() !== "");
     if (lines.length < 2) return null;
 
     const header = lines[0].split(",").map((h) => h.trim());
     const stats = new Map<string, AdvancedPlayerStats>();
 
-    // Column indices we need
-    const col = (name: string) => header.indexOf(name);
-    const weekIdx = col("week");
-    const seasonTypeIdx = col("season_type");
-    const nameIdx = col("player_display_name");
-
-    if (weekIdx === -1 || nameIdx === -1) {
+    if (header.indexOf("player_display_name") === -1) {
       console.error("nflverse CSV missing expected columns");
       return null;
     }
@@ -136,13 +151,15 @@ export async function getAdvancedStats(
 
       stats.set(name, {
         name,
-        team: row.recent_team ?? "",
+        team: row.team ?? row.recent_team ?? "",
         position,
         week,
         // EPA
         passingEPA: toNum(row.passing_epa),
         rushingEPA: toNum(row.rushing_epa),
         receivingEPA: toNum(row.receiving_epa),
+        // CPOE
+        cpoe: toNum(row.passing_cpoe),
         // Air yards
         passingAirYards: toNum(row.passing_air_yards),
         receivingAirYards: toNum(row.receiving_air_yards),
@@ -161,7 +178,7 @@ export async function getAdvancedStats(
 
     return stats.size > 0 ? stats : null;
   } catch (error) {
-    console.error("nflverse advanced stats fetch failed:", error);
+    console.error("nflverse advanced stats parse failed:", error);
     return null;
   }
 }
@@ -178,6 +195,9 @@ export function formatAdvancedStats(
   if (stats.position === "QB") {
     if (stats.passingEPA != null) {
       parts.push(`Passing EPA: ${stats.passingEPA > 0 ? "+" : ""}${stats.passingEPA}`);
+    }
+    if (stats.cpoe != null) {
+      parts.push(`CPOE: ${stats.cpoe > 0 ? "+" : ""}${stats.cpoe}%`);
     }
     if (stats.rushingEPA != null && stats.rushingEPA !== 0) {
       parts.push(`Rushing EPA: ${stats.rushingEPA > 0 ? "+" : ""}${stats.rushingEPA}`);
