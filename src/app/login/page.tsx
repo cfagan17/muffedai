@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { login } from "./actions";
+import { sendMagicLink } from "./actions";
 
 export default async function LoginPage({
   searchParams,
@@ -16,7 +16,7 @@ export default async function LoginPage({
             Fantasy Playbook
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Sign in to your account
+            Enter your email to get started — no password needed.
           </p>
         </div>
 
@@ -27,8 +27,13 @@ export default async function LoginPage({
         )}
 
         {params.message && (
-          <div className="rounded-md bg-green-50 p-3 text-sm text-green-700">
-            {params.message}
+          <div className="rounded-md bg-emerald-50 p-4 text-center">
+            <p className="text-sm font-semibold text-emerald-800">
+              {params.message}
+            </p>
+            <p className="mt-1 text-xs text-emerald-600">
+              The link will expire in 24 hours.
+            </p>
           </div>
         )}
 
@@ -50,41 +55,28 @@ export default async function LoginPage({
             />
           </div>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-slate-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={6}
-              className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              placeholder="••••••••"
-            />
-          </div>
-
           <button
-            formAction={login}
+            formAction={sendMagicLink}
             className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
           >
-            Sign in
+            Send me a login link
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-600">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/signup"
-            className="font-semibold text-emerald-600 hover:text-emerald-500"
-          >
-            Sign up
-          </Link>
+        <p className="text-center text-xs text-slate-400">
+          We&apos;ll email you a magic link to sign in.
+          <br />
+          New here? This will create your account automatically.
         </p>
+
+        <div className="text-center">
+          <Link
+            href="/"
+            className="text-sm text-slate-500 hover:text-slate-700"
+          >
+            &larr; Back to home
+          </Link>
+        </div>
       </div>
     </div>
   );

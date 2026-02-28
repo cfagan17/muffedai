@@ -9,20 +9,12 @@ export default function Home() {
           <span className="text-xl font-bold text-slate-900">
             Fantasy Playbook
           </span>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
-            >
-              Get Started
-            </Link>
-          </div>
+          <Link
+            href="/login"
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+          >
+            Get Started
+          </Link>
         </div>
       </header>
 
@@ -42,10 +34,10 @@ export default function Home() {
           </p>
           <div className="mt-10 flex items-center justify-center gap-4">
             <Link
-              href="/signup"
+              href="/login"
               className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500"
             >
-              Create Free Account
+              Get Started — Free
             </Link>
             <Link
               href="/report/sample"

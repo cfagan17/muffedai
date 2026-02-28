@@ -13,7 +13,7 @@ export default function SampleReportPage() {
             Fantasy Playbook
           </Link>
           <Link
-            href="/signup"
+            href="/login"
             className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
           >
             Get Started
@@ -345,10 +345,10 @@ export default function SampleReportPage() {
             Sign up, add your players, and get your first report next Tuesday.
           </p>
           <Link
-            href="/signup"
+            href="/login"
             className="mt-6 inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500"
           >
-            Create Free Account
+            Get Started — Free
           </Link>
         </div>
       </main>
