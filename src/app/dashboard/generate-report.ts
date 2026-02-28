@@ -546,7 +546,7 @@ export async function generateReport() {
   let bottomLine: string | null = null;
   const playerNarrativeMap: Record<
     string,
-    { narrative: string; outlook: string }
+    { narrative: string; outlook: string; keyInsight: string; tags: string[] }
   > = {};
 
   if (isAIEnabled()) {
@@ -631,6 +631,12 @@ export async function generateReport() {
 
   const playerBreakdowns = playerData.map((p) => {
     const aiNarr = playerNarrativeMap[p.name];
+    // Pack betting lines, key insight, and tags into the JSONB column
+    const bettingAndInsights = {
+      lines: buildBettingLines(p.game),
+      keyInsight: aiNarr?.keyInsight ?? null,
+      tags: aiNarr?.tags ?? [],
+    };
     return {
       player_id: p.player_id,
       position_tag: p.position_tag,
@@ -638,7 +644,7 @@ export async function generateReport() {
       season_avg: p.seasonAvg, // Real data from SportsDataIO, or null
       position_rank: p.positionRank, // Real data from SportsDataIO, or null
       stats_line: p.statsLine,
-      betting_lines: buildBettingLines(p.game),
+      betting_lines: bettingAndInsights,
       narrative: aiNarr?.narrative ?? (p.points !== null ? null : "No statistics were available for this player this week."),
       outlook: aiNarr?.outlook ?? null,
     };

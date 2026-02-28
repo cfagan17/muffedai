@@ -78,6 +78,8 @@ type ReportInput = {
 type PlayerNarrative = {
   narrative: string;
   outlook: string;
+  keyInsight: string; // 1-sentence data-driven takeaway (e.g., EPA vs box score disconnect)
+  tags: string[]; // 2-4 short labels like "EPA Leader", "Target Hog", "Buy Low", "Sell High"
 };
 
 type ReportNarratives = {
@@ -260,11 +262,13 @@ KEY GUIDELINES:
 
 Return ONLY valid JSON with this exact structure:
 {
-  "weekNarrative": "3-4 paragraphs reviewing the week. Open with the headline story. Reference players BY NAME. Highlight the best and worst performers. If you have real game context (scores, recaps), weave it in naturally. Cross-reference when players share the same game. Close with what this week tells us about the roster's trajectory.",
+  "weekNarrative": "4-5 paragraphs reviewing the week. Paragraph 1: Open with the headline performance — who won the week and why, referencing the final score and game script. Paragraph 2: The deeper story — what the advanced analytics reveal. Highlight EPA leaders/laggards, note where box score stats are misleading (e.g., 'Player X put up 18 points but his -2.1 receiving EPA shows most of that production came on one broken play'). Reference target shares and snap counts to discuss workload trends. Paragraph 3: Betting and game-flow context — how did actual results compare to Vegas expectations? Did any games play out differently than the spread predicted, and how did that affect your players? Paragraph 4: Cross-reference players who share games or have contrasting performances. A QB and his WR on the same roster, or two players on opposite sides of the same blowout. Paragraph 5: Close with what this week tells us about the roster's trajectory — trends to ride, concerns to address, and moves to consider.",
   "playerNarratives": {
     "PLAYER_NAME": {
-      "narrative": "3-4 paragraphs of game analysis. Lead with what happened and why. Reference the opponent, game script, and key moments. If web research provided quotes or specific plays, incorporate them. Discuss usage trends (snap share, target share, touch count) and what the underlying numbers suggest. Distinguish between a player who earned their production vs. one who got lucky. The goal is insight — help the reader understand whether this performance is repeatable.",
-      "outlook": "1-2 paragraphs about next week's matchup. Reference the upcoming opponent by name and their specific defensive tendencies (if research is available). Project a range of outcomes rather than a point prediction. Note any injury concerns or lineup changes that could affect production."
+      "narrative": "3-4 paragraphs of game analysis.\n\nParagraph 1: What happened and why. Lead with the stat line and score, referencing the opponent, game script, and any key moments from web research. Use the final score and betting line to frame the game — was it competitive or a blowout?\n\nParagraph 2: Under the hood. This is where the report earns its premium. Discuss EPA to separate real production from noise. Reference snap counts to confirm workload, target share and WOPR to evaluate opportunity quality, and air yards vs YAC to understand how the production was generated. For QBs, use CPOE and Dakota to assess accuracy beyond completion percentage. Compare actual stats to player prop lines when available ('His 87 rushing yards cleared the 72.5 prop, but just barely').\n\nParagraph 3: Context and sustainability. Reference team record, standings implications, and depth chart status. Is this role secure? Was the production game-script-dependent (a team trailing throws more)? Use DFS salary to add value context. Reference web research quotes or storylines when available.",
+      "outlook": "1-2 paragraphs about next week. Reference the upcoming opponent by name and record. Use the next-week projection as a baseline ('Projected for 14.2 points, right at his season average of 14.8'). Discuss any injury concerns, matchup advantages/disadvantages, and whether the advanced metrics suggest regression or continued production. Be specific about what to expect and why.",
+      "keyInsight": "One sharp, data-driven sentence that captures the most important takeaway. Use a specific stat or comparison. Example: 'His +8.4 passing EPA was elite, but 40% of it came on one broken coverage — the Dakota composite of +0.02 tells the truer story.' Or: 'A 31% target share with 0.48 WOPR makes him matchup-proof regardless of game script.'",
+      "tags": ["2-4 short labels that categorize this player's week. Choose from tags like: 'EPA Elite', 'EPA Concern', 'Volume King', 'Target Hog', 'Efficiency Monster', 'Boom Game', 'Bust Alert', 'Buy Low', 'Sell High', 'Workload Watch', 'Injury Risk', 'Breakout', 'TD Dependent', 'Garbage Time', 'Matchup Proof', 'Game Script Winner', 'Snap Count Alert', 'Prop Crusher', 'Under the Radar'"]
     }
   },
   "leagueContext": [
@@ -272,7 +276,7 @@ Return ONLY valid JSON with this exact structure:
     { "title": "Short headline", "body": "Another relevant story." },
     { "title": "Short headline", "body": "Another relevant story." }
   ],
-  "bottomLine": "3-4 sentences summarizing the week grade, standout performer, biggest concern, and the key thing to watch next week. Be direct and actionable."
+  "bottomLine": "4-5 sentences. Start with the grade and what it means. Name the MVP of the week and the biggest disappointment. Highlight one advanced-stat trend the reader should pay attention to going forward (e.g., 'Watch Lamb's target share — 29% is alpha territory and it's sustainable with Prescott healthy'). End with the single most important action item for next week."
 }
 
 DATA INTEGRITY — THIS IS CRITICAL:
@@ -306,7 +310,7 @@ export async function generateAINarratives(
   try {
     const response = await ai.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 8000,
+      max_tokens: 10000,
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -328,6 +332,13 @@ export async function generateAINarratives(
     if (!parsed.weekNarrative || !parsed.playerNarratives || !parsed.bottomLine) {
       console.error("AI response missing required fields");
       return null;
+    }
+
+    // Ensure keyInsight and tags have fallbacks for each player
+    for (const [name, narr] of Object.entries(parsed.playerNarratives)) {
+      if (!narr.keyInsight) narr.keyInsight = "";
+      if (!narr.tags || !Array.isArray(narr.tags)) narr.tags = [];
+      parsed.playerNarratives[name] = narr;
     }
 
     return parsed;

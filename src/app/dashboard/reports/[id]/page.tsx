@@ -8,6 +8,15 @@ type BettingLine = {
   result: string;
 };
 
+type BettingAndInsights = {
+  lines?: BettingLine[];
+  keyInsight?: string | null;
+  tags?: string[];
+  // Backwards compat: old reports stored betting lines as a flat array
+  label?: string;
+  result?: string;
+};
+
 type LeagueItem = {
   title: string;
   body: string;
@@ -47,18 +56,39 @@ export default async function ReportPage({
     .order("points", { ascending: false });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const players = ((reportPlayers ?? []) as any[]).map((rp) => ({
-    id: rp.id as number,
-    position_tag: rp.position_tag as string,
-    points: rp.points as number,
-    season_avg: rp.season_avg as number,
-    position_rank: rp.position_rank as string,
-    stats_line: rp.stats_line as string,
-    betting_lines: (rp.betting_lines ?? []) as BettingLine[],
-    narrative: rp.narrative as string,
-    outlook: rp.outlook as string,
-    nfl_players: rp.nfl_players as { name: string; team: string; position: string },
-  }));
+  const players = ((reportPlayers ?? []) as any[]).map((rp) => {
+    // Handle both old format (flat array) and new format (object with lines/keyInsight/tags)
+    const rawBetting = rp.betting_lines;
+    let bettingLines: BettingLine[] = [];
+    let keyInsight: string | null = null;
+    let tags: string[] = [];
+
+    if (Array.isArray(rawBetting)) {
+      // Old format: flat array of {label, result}
+      bettingLines = rawBetting as BettingLine[];
+    } else if (rawBetting && typeof rawBetting === "object") {
+      // New format: {lines, keyInsight, tags}
+      const data = rawBetting as BettingAndInsights;
+      bettingLines = (data.lines ?? []) as BettingLine[];
+      keyInsight = data.keyInsight ?? null;
+      tags = data.tags ?? [];
+    }
+
+    return {
+      id: rp.id as number,
+      position_tag: rp.position_tag as string,
+      points: rp.points as number,
+      season_avg: rp.season_avg as number,
+      position_rank: rp.position_rank as string,
+      stats_line: rp.stats_line as string,
+      betting_lines: bettingLines,
+      keyInsight,
+      tags,
+      narrative: rp.narrative as string,
+      outlook: rp.outlook as string,
+      nfl_players: rp.nfl_players as { name: string; team: string; position: string },
+    };
+  });
 
   const leagueContext = (report.league_context ?? []) as LeagueItem[];
   const createdAt = new Date(report.created_at);
@@ -123,7 +153,9 @@ export default async function ReportPage({
             The Week in Review
           </h2>
           <div className="prose prose-slate max-w-none">
-            <p>{report.week_narrative}</p>
+            {(report.week_narrative as string).split("\n\n").filter(Boolean).map((para: string, i: number) => (
+              <p key={i}>{para}</p>
+            ))}
           </div>
         </section>
 
@@ -165,6 +197,20 @@ export default async function ReportPage({
                 )}
               </div>
 
+              {/* Tags (AI-generated insight labels) */}
+              {player.tags.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {player.tags.map((tag: string, i: number) => (
+                    <span
+                      key={i}
+                      className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="mt-4 flex flex-wrap gap-2">
                 {player.position_rank && (
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
@@ -198,18 +244,32 @@ export default async function ReportPage({
                 </div>
               )}
 
+              {/* Key Insight callout */}
+              {player.keyInsight && (
+                <div className="mt-3 rounded-lg border-l-4 border-indigo-400 bg-indigo-50 px-4 py-2">
+                  <p className="text-sm font-medium text-indigo-900">
+                    {player.keyInsight}
+                  </p>
+                </div>
+              )}
+
               <div className="prose prose-slate prose-sm mt-4 max-w-none">
                 {player.narrative ? (
-                  <p>{player.narrative}</p>
+                  player.narrative.split("\n\n").filter(Boolean).map((para: string, i: number) => (
+                    <p key={i}>{para}</p>
+                  ))
                 ) : (
                   <p className="text-slate-400 italic">
                     No narrative available for this player.
                   </p>
                 )}
                 {player.outlook && (
-                  <p>
-                    <strong>Looking ahead:</strong> {player.outlook}
-                  </p>
+                  <>
+                    <p className="font-semibold text-slate-800 mt-4 mb-1">Looking Ahead</p>
+                    {player.outlook.split("\n\n").filter(Boolean).map((para: string, i: number) => (
+                      <p key={`outlook-${i}`}>{para}</p>
+                    ))}
+                  </>
                 )}
               </div>
             </div>
@@ -255,8 +315,10 @@ export default async function ReportPage({
               </div>
             </div>
             {report.bottom_line && (
-              <div className="mt-4 border-t border-emerald-200 pt-4">
-                <p className="text-sm text-emerald-800">{report.bottom_line}</p>
+              <div className="mt-4 border-t border-emerald-200 pt-4 space-y-2">
+                {(report.bottom_line as string).split("\n\n").filter(Boolean).map((para: string, i: number) => (
+                  <p key={i} className="text-sm text-emerald-800">{para}</p>
+                ))}
               </div>
             )}
           </div>
