@@ -264,12 +264,7 @@ export default async function ReportPage({
                   </p>
                 )}
                 {player.outlook && (
-                  <>
-                    <p className="font-semibold text-slate-800 mt-4 mb-1">Looking Ahead</p>
-                    {player.outlook.split("\n\n").filter(Boolean).map((para: string, i: number) => (
-                      <p key={`outlook-${i}`}>{para}</p>
-                    ))}
-                  </>
+                  <p><strong>Next week:</strong> {player.outlook}</p>
                 )}
               </div>
             </div>

@@ -239,61 +239,47 @@ The user's roster scored ${input.totalPoints} total points — graded as a ${inp
 ROSTER:
 ${playerSummaries}${leagueNewsSection}
 
-Write the following sections as JSON. Your writing should be vivid, specific, and authoritative — like a sharp fantasy analyst who watched every snap of every game. This isn't generic stat recitation; it's insight-driven storytelling.
+Write the following sections as JSON. This report is designed to be read aloud as a ~2 minute audio briefing. Every sentence must earn its place — no filler, no generic observations. You have a wealth of data; your job is to DISTILL it down to the sharpest insights only.
 
-KEY GUIDELINES:
-- When web research is provided for a player, USE IT. Reference specific game moments, quote coaches or players, mention real storylines. This is what separates a great report from a generic one.
-- When real game scores are provided, reference them. "The Chiefs' 24-17 win over the Lions" is more compelling than "a competitive game."
-- Cross-reference players when they share the same game or have contrasting performances.
-- Be opinionated. Take positions on whether a performance is sustainable or a fluke.
-- Use advanced football language naturally: snap share, target share, air yards, red zone share, route participation, defensive front, coverage shell.
-- When snap counts are provided, USE THEM to discuss workload and usage trends. "He played 58 of 65 snaps (89%)" adds real insight.
-- When depth chart status is provided, USE IT to discuss role security and opportunity. A starter with high snap counts tells a different story than a backup who got garbage-time work.
-- When injury data is provided, ALWAYS address it in the outlook section. Injury context is critical for fantasy decisions.
-- When next-week projections are provided, reference them in the outlook — compare projected points to season average to frame expectations.
-- When team records and standings are provided, USE THEM to frame game script narratives. A 10-2 team playing a 3-9 team creates a clear game script expectation. Teams on winning/losing streaks play differently. Playoff implications affect coaching decisions (resting starters, conservative play-calling).
-- When betting lines are provided (spreads, O/U, implied totals, moneylines), USE THEM to add sharp analysis. Compare actual game results to the betting line: "The Bills were 7-point favorites and won by 3 — a closer game than Vegas expected, which inflated garbage-time targets." Implied team totals help frame expected scoring environments.
-- When player props are provided, USE THEM for context. Compare actual performance to the prop line: "Mahomes' 312 passing yards sailed over his 275.5 prop" or "The rushing yards fell short of his 85.5 prop, which should concern PPR managers." Props reveal market expectations vs. reality.
-- When DFS salaries are provided, mention them to add a "value" angle. "At $7,200 on DraftKings, he's a screaming value if this target share holds" adds cross-format relevance.
-- When advanced analytics are provided (EPA, CPOE, air yards, YAC, target share, WOPR), USE THEM to separate surface-level stats from underlying quality. EPA is the gold standard — a QB with positive passing EPA is genuinely helping his team score, while negative EPA means the offense moved backwards on his plays even if the box score looks fine. CPOE (Completion Percentage Over Expected) shows whether a QB is completing passes harder or easier than expected — positive CPOE means he's making throws other QBs would miss. Use EPA and CPOE together to identify players who were better or worse than their stat line suggests.
-- Target share and WOPR reveal opportunity quality: "His 28% target share and 0.52 WOPR show he's the clear alpha in this offense." Air yards share distinguishes deep threats from underneath receivers. RACR (receiving yards / air yards) above 1.0 means the player is generating YAC, below 1.0 means he's dropping deep balls or the QB is missing him.
-- Reference specific drives or quarters when the research supports it.
-- The tone is confident and conversational — you're a trusted fantasy advisor talking to a friend who takes their league seriously.
+VOICE & STYLE:
+- Confident, conversational, opinionated — you're a trusted fantasy advisor giving a quick briefing
+- Lead with the insight, back it with the data point. Not: "He had 73 yards." But: "Gibbs' +4.2 rushing EPA says the 73 yards undersell how dominant he was."
+- Be specific: real scores, real stat lines, real prop lines, real EPA numbers
+- Cross-reference players who share the same game when relevant
+
+DATA PRIORITY — you have a lot of data, so here's how to pick what makes the cut:
+- Advanced analytics (EPA, CPOE, target share, WOPR, YAC) are your sharpest tools. Use them to reveal what the box score hides — a player who was better or worse than their stat line suggests. This is the #1 differentiator.
+- Betting context (props, spreads, O/U) adds color when it tells a story: "cleared his 72.5 rushing prop" or "game went 14 points over the total, inflating everyone's numbers."
+- Snap counts and depth chart status matter when there's a trend or surprise — don't mention them if the player is an established starter with normal usage.
+- Web research quotes and game moments add texture when vivid — use the best one per player, not all of them.
+- Injury status is ALWAYS worth mentioning if a player is hurt. Skip it only if they're fully healthy.
+- Next-week projections belong in the outlook — compare to season average to set expectations.
 
 Return ONLY valid JSON with this exact structure:
 {
-  "weekNarrative": "4-5 paragraphs reviewing the week. Paragraph 1: Open with the headline performance — who won the week and why, referencing the final score and game script. Paragraph 2: The deeper story — what the advanced analytics reveal. Highlight EPA leaders/laggards, note where box score stats are misleading (e.g., 'Player X put up 18 points but his -2.1 receiving EPA shows most of that production came on one broken play'). Reference target shares and snap counts to discuss workload trends. Paragraph 3: Betting and game-flow context — how did actual results compare to Vegas expectations? Did any games play out differently than the spread predicted, and how did that affect your players? Paragraph 4: Cross-reference players who share games or have contrasting performances. A QB and his WR on the same roster, or two players on opposite sides of the same blowout. Paragraph 5: Close with what this week tells us about the roster's trajectory — trends to ride, concerns to address, and moves to consider.",
+  "weekNarrative": "ONE paragraph, 3-5 sentences. Open with the week's headline (grade, total points, the story of the week). Hit the 1-2 most interesting analytics insights across the roster — where did the advanced numbers diverge from the box score? Close with one sentence on the overall roster trajectory or a key trend.",
   "playerNarratives": {
     "PLAYER_NAME": {
-      "narrative": "3-4 paragraphs of game analysis.\n\nParagraph 1: What happened and why. Lead with the stat line and score, referencing the opponent, game script, and any key moments from web research. Use the final score and betting line to frame the game — was it competitive or a blowout?\n\nParagraph 2: Under the hood. This is where the report earns its premium. Discuss EPA to separate real production from noise. Reference snap counts to confirm workload, target share and WOPR to evaluate opportunity quality, and air yards vs YAC to understand how the production was generated. For QBs, use CPOE and Dakota to assess accuracy beyond completion percentage. Compare actual stats to player prop lines when available ('His 87 rushing yards cleared the 72.5 prop, but just barely').\n\nParagraph 3: Context and sustainability. Reference team record, standings implications, and depth chart status. Is this role secure? Was the production game-script-dependent (a team trailing throws more)? Use DFS salary to add value context. Reference web research quotes or storylines when available.",
-      "outlook": "1-2 paragraphs about next week. Reference the upcoming opponent by name and record. Use the next-week projection as a baseline ('Projected for 14.2 points, right at his season average of 14.8'). Discuss any injury concerns, matchup advantages/disadvantages, and whether the advanced metrics suggest regression or continued production. Be specific about what to expect and why.",
-      "keyInsight": "One sharp, data-driven sentence that captures the most important takeaway. Use a specific stat or comparison. Example: 'His +8.4 passing EPA was elite, but 40% of it came on one broken coverage — the Dakota composite of +0.02 tells the truer story.' Or: 'A 31% target share with 0.48 WOPR makes him matchup-proof regardless of game script.'",
-      "tags": ["2-4 short labels that categorize this player's week. Choose from tags like: 'EPA Elite', 'EPA Concern', 'Volume King', 'Target Hog', 'Efficiency Monster', 'Boom Game', 'Bust Alert', 'Buy Low', 'Sell High', 'Workload Watch', 'Injury Risk', 'Breakout', 'TD Dependent', 'Garbage Time', 'Matchup Proof', 'Game Script Winner', 'Snap Count Alert', 'Prop Crusher', 'Under the Radar'"]
+      "narrative": "2-4 sentences. Lead with the key stat line and score context. Then deliver the ONE most important insight from the data — the thing that tells you whether this performance is real or misleading. Use EPA, target share, snap counts, prop results, or game script as evidence. Don't rehash the stat line — interpret it.",
+      "outlook": "1-2 sentences about next week. Name the opponent, reference the projection vs season average, flag any injury concern, and give a clear expectation.",
+      "keyInsight": "One sharp, data-driven sentence. The single most important takeaway. Example: 'A 42% carry share with +4.2 rushing EPA — he's not splitting this backfield, he's winning it.'",
+      "tags": ["2-4 short labels. Choose from: 'EPA Elite', 'EPA Concern', 'Volume King', 'Target Hog', 'Efficiency Monster', 'Boom Game', 'Bust Alert', 'Buy Low', 'Sell High', 'Workload Watch', 'Injury Risk', 'Breakout', 'TD Dependent', 'Garbage Time', 'Matchup Proof', 'Game Script Winner', 'Snap Count Alert', 'Prop Crusher', 'Under the Radar'"]
     }
   },
   "leagueContext": [
-    { "title": "Short headline (under 8 words)", "body": "3-4 sentences about an NFL story that matters for fantasy. If web research provided league news, use those real stories. Reference real teams, players, and situations. Explain the fantasy implication clearly." },
-    { "title": "Short headline", "body": "Another relevant story." },
-    { "title": "Short headline", "body": "Another relevant story." }
+    { "title": "Headline (under 8 words)", "body": "2-3 sentences. One NFL story that matters for fantasy this week. Be specific about the implication." }
   ],
-  "bottomLine": "4-5 sentences. Start with the grade and what it means. Name the MVP of the week and the biggest disappointment. Highlight one advanced-stat trend the reader should pay attention to going forward (e.g., 'Watch Lamb's target share — 29% is alpha territory and it's sustainable with Prescott healthy'). End with the single most important action item for next week."
+  "bottomLine": "2-3 sentences. Name the MVP, the biggest concern, and the single most important action item for next week."
 }
 
-DATA INTEGRITY — THIS IS CRITICAL:
+CRITICAL RULES:
+- TOTAL OUTPUT should be roughly 250-350 words across all narrative fields (excluding tags/keyInsight). This is a 2-minute audio briefing, not an essay.
 - NEVER fabricate statistics, scores, game events, quotes, or any factual claims
 - NEVER invent data that was not provided — only reference stats, scores, and facts from the input above
-- If a player's stats show "Stats not available", acknowledge this honestly — do NOT invent a stat line or pretend to know how they performed. You may still write about them using web research if available.
-- If opponent is "Unknown", do not guess who they played
-- If next week's opponent is "Unknown", say the matchup information is not yet available
-- Only reference quotes, plays, or specific game moments if they come from the web research provided
-- When research IS available, USE IT — reference specific game moments, quote coaches or players, cite real storylines
-- When research is NOT available, write analytically based only on the confirmed stats and game context provided — no speculation presented as fact
-
-FORMATTING:
+- If stats show "Stats not available", say so briefly — don't invent numbers
+- If opponent is "Unknown", don't guess
+- When research IS available, pick the single best detail (a quote, a play, a storyline) — don't use all of them
 - Use EXACTLY the player names from the roster above as keys in playerNarratives
-- Make narratives feel unique to each player and game, never templated
-- Be specific with real data: "He caught 7 of 9 targets for 89 yards" beats "He had a solid day receiving"
-- Cross-reference players when they share games or have contrasting performances
 - The tone is confident and conversational, but always grounded in the data provided`;
 }
 
@@ -310,7 +296,7 @@ export async function generateAINarratives(
   try {
     const response = await ai.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 10000,
+      max_tokens: 4000,
       messages: [{ role: "user", content: prompt }],
     });
 
