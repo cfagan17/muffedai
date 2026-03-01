@@ -82,14 +82,21 @@ type PlayerNarrative = {
   tags: string[]; // 2-4 short labels like "EPA Leader", "Target Hog", "Buy Low", "Sell High"
 };
 
+type StartSitRec = {
+  player: string;
+  verdict: "START" | "SIT" | "FLEX";
+  reason: string;
+};
+
 type ReportNarratives = {
   weekNarrative: string;
   playerNarratives: Record<string, PlayerNarrative>; // keyed by player name
   leagueContext: { title: string; body: string }[];
   bottomLine: string;
+  startSit: StartSitRec[];
 };
 
-export type { PlayerInput, ReportInput, ReportNarratives, PlayerNarrative };
+export type { PlayerInput, ReportInput, ReportNarratives, PlayerNarrative, StartSitRec };
 
 // --- Prompt construction ---
 
@@ -269,8 +276,19 @@ Return ONLY valid JSON with this exact structure:
   "leagueContext": [
     { "title": "Headline (under 8 words)", "body": "2-3 sentences. One NFL story that matters for fantasy this week. Be specific about the implication." }
   ],
+  "startSit": [
+    { "player": "PLAYER_NAME", "verdict": "START or SIT or FLEX", "reason": "1 sentence. Why — reference projection, matchup, usage trend, or injury. Be specific." }
+  ],
   "bottomLine": "2-3 sentences. Name the MVP, the biggest concern, and the single most important action item for next week."
 }
+
+ABOUT startSit:
+- Include a recommendation for EVERY player on the roster
+- START = confident play, top option at the position for next week
+- SIT = consider benching, bad matchup or concerning trend
+- FLEX = borderline, depends on other roster options
+- Base the verdict on next-week projections, opponent strength, injury status, and recent trends
+- If no next-week data is available, say so but still give a lean based on season trajectory
 
 CRITICAL RULES:
 - TOTAL OUTPUT should be roughly 250-350 words across all narrative fields (excluding tags/keyInsight). This is a 2-minute audio briefing, not an essay.
@@ -325,6 +343,11 @@ export async function generateAINarratives(
       if (!narr.keyInsight) narr.keyInsight = "";
       if (!narr.tags || !Array.isArray(narr.tags)) narr.tags = [];
       parsed.playerNarratives[name] = narr;
+    }
+
+    // Ensure startSit has a fallback
+    if (!parsed.startSit || !Array.isArray(parsed.startSit)) {
+      parsed.startSit = [];
     }
 
     return parsed;

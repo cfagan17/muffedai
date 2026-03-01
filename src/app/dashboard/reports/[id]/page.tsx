@@ -2,6 +2,8 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signout } from "@/app/login/actions";
+import AudioPlayer from "./audio-player";
+import PlayerTrends from "./player-trends";
 
 type BettingLine = {
   label: string;
@@ -20,6 +22,12 @@ type BettingAndInsights = {
 type LeagueItem = {
   title: string;
   body: string;
+};
+
+type StartSitItem = {
+  player: string;
+  verdict: "START" | "SIT" | "FLEX";
+  reason: string;
 };
 
 export default async function ReportPage({
@@ -90,7 +98,41 @@ export default async function ReportPage({
     };
   });
 
+  // Fetch historical points for trend sparklines
+  const playerIds = players.map((p) => p.id);
+  const playerIdToNflId = new Map(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((reportPlayers ?? []) as any[]).map((rp) => [rp.id as number, rp.player_id as number])
+  );
+
+  // Get all report_players for this user's reports in the same season
+  const { data: trendData } = await supabase
+    .from("report_players")
+    .select("player_id, points, report_id, reports!inner(week_number, season, user_id)")
+    .eq("reports.user_id", user.id)
+    .eq("reports.season", report.season)
+    .order("report_id", { ascending: true });
+
+  // Build trend map: nfl_player_id -> {week, points}[]
+  const trendMap = new Map<number, { week: number; points: number }[]>();
+  if (trendData) {
+    for (const row of trendData) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const r = row as any;
+      const weekNum = r.reports?.week_number;
+      if (weekNum == null || r.points == null) continue;
+      const arr = trendMap.get(r.player_id) ?? [];
+      arr.push({ week: weekNum, points: Number(r.points) });
+      trendMap.set(r.player_id, arr);
+    }
+  }
+  // Sort each player's trend by week
+  for (const arr of trendMap.values()) {
+    arr.sort((a, b) => a.week - b.week);
+  }
+
   const leagueContext = (report.league_context ?? []) as LeagueItem[];
+  const startSit = (report.start_sit ?? []) as StartSitItem[];
   const createdAt = new Date(report.created_at);
   const dateStr = createdAt.toLocaleDateString("en-US", {
     weekday: "long",
@@ -146,6 +188,13 @@ export default async function ReportPage({
             &middot; Generated {dateStr}
           </p>
         </div>
+
+        {/* Audio Player */}
+        {report.audio_url && (
+          <div className="mb-8">
+            <AudioPlayer audioUrl={report.audio_url as string} />
+          </div>
+        )}
 
         {/* Week in Review */}
         <section className="mb-12">
@@ -244,6 +293,15 @@ export default async function ReportPage({
                 </div>
               )}
 
+              {/* Week-over-week trend sparkline */}
+              {(() => {
+                const nflId = playerIdToNflId.get(player.id);
+                const trend = nflId ? trendMap.get(nflId) : undefined;
+                return trend && trend.length >= 2 ? (
+                  <PlayerTrends data={trend} currentWeek={report.week_number} />
+                ) : null;
+              })()}
+
               {/* Key Insight callout */}
               {player.keyInsight && (
                 <div className="mt-3 rounded-lg border-l-4 border-indigo-400 bg-indigo-50 px-4 py-2">
@@ -287,6 +345,48 @@ export default async function ReportPage({
                   <p className="mt-2 text-sm text-slate-600">{item.body}</p>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Start/Sit Recommendations */}
+        {startSit.length > 0 && (
+          <section className="mb-12">
+            <h2 className="mb-4 text-2xl font-bold text-slate-900">
+              Next Week: Start / Sit
+            </h2>
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              {startSit.map((rec, i) => {
+                const verdictColors = {
+                  START: "bg-emerald-100 text-emerald-800",
+                  SIT: "bg-red-100 text-red-800",
+                  FLEX: "bg-amber-100 text-amber-800",
+                };
+                return (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-4 px-5 py-3 ${
+                      i > 0 ? "border-t border-slate-100" : ""
+                    }`}
+                  >
+                    <span
+                      className={`inline-flex w-16 items-center justify-center rounded-full px-2 py-0.5 text-xs font-bold ${
+                        verdictColors[rec.verdict] ?? "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {rec.verdict}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold text-slate-900">
+                        {rec.player}
+                      </span>
+                      <span className="ml-2 text-sm text-slate-500">
+                        {rec.reason}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}

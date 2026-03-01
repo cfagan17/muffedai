@@ -6,6 +6,7 @@ import PlayerSearch from "./player-search";
 import Roster from "./roster";
 import ScoringFormat from "./scoring-format";
 import GenerateButton from "./generate-button";
+import SleeperImport from "./sleeper-import";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -89,6 +90,24 @@ export default async function DashboardPage() {
                 {rosterPlayers.length}/7 slots filled.
               </span>
             </p>
+
+            {/* Sleeper Import */}
+            {rosterPlayers.length === 0 && (
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-medium text-slate-600">
+                  Import from Sleeper
+                </p>
+                <SleeperImport />
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white px-2 text-slate-400">or add manually</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mt-4">
               <PlayerSearch usedPositionTags={usedPositionTags} />

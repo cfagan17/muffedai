@@ -31,6 +31,7 @@ import {
   getDfsSalaries,
 } from "@/lib/sportsdata";
 import { getAdvancedStats, formatAdvancedStats } from "@/lib/nflverse";
+import { isTTSEnabled, buildAudioScript, generateAndStoreAudio } from "@/lib/tts";
 
 // --- NFL team lookup ---
 
@@ -544,6 +545,7 @@ export async function generateReport() {
   let weekNarrative: string | null = null;
   let leagueContext: object[] = [];
   let bottomLine: string | null = null;
+  let startSit: { player: string; verdict: string; reason: string }[] = [];
   const playerNarrativeMap: Record<
     string,
     { narrative: string; outlook: string; keyInsight: string; tags: string[] }
@@ -615,6 +617,7 @@ export async function generateReport() {
       weekNarrative = aiResult.weekNarrative;
       leagueContext = aiResult.leagueContext;
       bottomLine = aiResult.bottomLine;
+      startSit = aiResult.startSit ?? [];
       for (const [name, narr] of Object.entries(aiResult.playerNarratives)) {
         playerNarrativeMap[name] = narr;
       }
@@ -672,6 +675,7 @@ export async function generateReport() {
       week_narrative: weekNarrative ?? noAIMessage,
       league_context: leagueContext.length > 0 ? leagueContext : null,
       bottom_line: bottomLine,
+      start_sit: startSit.length > 0 ? startSit : null,
       status: "generated",
     })
     .select("id")
@@ -702,6 +706,34 @@ export async function generateReport() {
 
   if (playersError) {
     console.error("Report players insert error:", playersError);
+  }
+
+  // ===================================================================
+  // PHASE 6: Generate TTS audio (non-blocking — runs after save)
+  // ===================================================================
+
+  if (isTTSEnabled() && weekNarrative) {
+    // Fire and forget — don't block the user from seeing their report
+    const audioScript = buildAudioScript({
+      title: `Week ${weekNumber} Report`,
+      grade,
+      week_narrative: weekNarrative,
+      bottom_line: bottomLine,
+      players: playerBreakdowns.map((p) => ({
+        name: playerData.find((pd) => pd.player_id === p.player_id)?.name ?? "",
+        narrative: p.narrative,
+        outlook: p.outlook,
+      })),
+    });
+
+    generateAndStoreAudio(audioScript, report.id).then(async (audioUrl) => {
+      if (audioUrl) {
+        await supabase
+          .from("reports")
+          .update({ audio_url: audioUrl })
+          .eq("id", report.id);
+      }
+    });
   }
 
   revalidatePath("/dashboard");
