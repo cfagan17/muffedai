@@ -143,7 +143,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <FootballIcon className="h-6 w-6 text-emerald-400" />
             <span className="text-lg font-bold text-white">
-              Fantasy Playbook
+              Muffed
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -531,7 +531,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FootballIcon className="h-4 w-4 text-slate-700" />
-            <span className="text-sm text-slate-700">Fantasy Playbook</span>
+            <span className="text-sm text-slate-700">Muffed</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/report/sample" className="text-xs text-slate-600 hover:text-slate-400 transition-colors">

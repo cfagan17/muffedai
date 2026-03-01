@@ -237,7 +237,7 @@ function buildPrompt(input: ReportInput): string {
       .join("\n")}`;
   }
 
-  return `You are the lead analyst for Fantasy Playbook, a premium fantasy football report that reads like The Ringer meets ESPN Fantasy Focus. Write the narrative sections for a Week ${input.weekNumber} report (${input.season} season, ${input.scoringFormat} scoring).
+  return `You are the lead analyst for Muffed, a premium fantasy football report that reads like The Ringer meets ESPN Fantasy Focus. Write the narrative sections for a Week ${input.weekNumber} report (${input.season} season, ${input.scoringFormat} scoring).
 
 ${dataContext}
 

@@ -60,7 +60,7 @@ export async function sendReportEmail(data: ReportEmailData): Promise<boolean> {
   <div style="max-width:600px;margin:0 auto;padding:32px 16px">
     <!-- Header -->
     <div style="text-align:center;margin-bottom:32px">
-      <h1 style="margin:0;font-size:24px;color:#0f172a">Fantasy Playbook</h1>
+      <h1 style="margin:0;font-size:24px;color:#0f172a">Muffed</h1>
       <p style="margin:8px 0 0;font-size:14px;color:#64748b">Week ${data.weekNumber} Report &middot; ${data.season} Season</p>
     </div>
 
@@ -98,8 +98,8 @@ export async function sendReportEmail(data: ReportEmailData): Promise<boolean> {
 
     <!-- Footer -->
     <div style="text-align:center;font-size:12px;color:#94a3b8">
-      <p style="margin:0">Fantasy Playbook — Your weekly fantasy football analyst.</p>
-      <p style="margin:8px 0 0">You're receiving this because you signed up at Fantasy Playbook.</p>
+      <p style="margin:0">Muffed — Your weekly fantasy football analyst.</p>
+      <p style="margin:8px 0 0">You're receiving this because you signed up at Muffed.</p>
     </div>
   </div>
 </body>
@@ -107,7 +107,7 @@ export async function sendReportEmail(data: ReportEmailData): Promise<boolean> {
 
   try {
     const { error } = await resend.emails.send({
-      from: "Fantasy Playbook <reports@fantasyplaybook.app>",
+      from: "Muffed <reports@muffed.ai>",
       to: data.to,
       subject: `Week ${data.weekNumber}: ${data.grade} — ${data.totalPoints} pts`,
       html,

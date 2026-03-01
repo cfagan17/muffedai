@@ -10,7 +10,7 @@ export default function SampleReportPage() {
             href="/"
             className="text-xl font-bold text-slate-900"
           >
-            Fantasy Playbook
+            Muffed
           </Link>
           <Link
             href="/login"
